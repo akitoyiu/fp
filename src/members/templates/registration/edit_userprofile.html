@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit User Profile{% endblock %}
+
+{% block content %}
+{% load my_template_tags %}
+{% load imagefit %}
+
+{% if user.is_authenticated %}
+
+<div class="card" style="width: 45rem;">
+    <div class="card-body">
+    <h5 class="card-title">Edit Profile</h5>
+    <br/>
+    <div class="form-group">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <table border=0>
+            <tr>
+            <td align=left width=30%>
+                {% if form.instance.profile_image %}                    
+                    <img src="{{ form.instance.profile_image.url|resize:'100x100,C' }}"  >
+                {% else %}
+                {% load static %}
+                    <img width=100px src="{% static 'familypost/images/default_profile.jpg' %}" >                
+                {% endif %}                   
+            </td>   
+            <td width=80%>{{ form.profile_image }}</td>
+            </tr>
+            </div>
+            </table>
+            <br />
+            First name: <br/>
+            {{ form.first_name }} <br />
+            Last name: <br/>
+            {{ form.last_name }}  <br />
+            Email Address: <br/>            
+            {{ form.email }}  <br />
+            Bio: <br/>
+            {{ form.bio }}  <br />
+            Your web site: <br />
+            {{ form.www_url }}  <br />
+            Instagram page <br />
+            {{ form.ig_url }}  <br />
+
+
+            <button class="btn btn-secondary">Update User Profile</button>
+        </form>
+    </div>
+    </div>
+</div>
+
+{% else %}
+Please login first.
+
+{% endif %}
+
+{% endblock %}

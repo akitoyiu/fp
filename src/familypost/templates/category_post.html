@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<H4>{{ cats }}</H4>
+    {% load my_template_tags %}
+    <div class="infinite-container">
+    {% for post in post_list %}
+    <div class="infinite-item">
+    <div class="card" style="width: 45rem">      
+      <div class="card-body">
+        <a class="text-decoration-none text-muted" href="{% url 'HomePage' post.author.id %}">
+        <table border="0">
+          <tr>
+            <td>
+              {% if post.author.userprofile.profile_image %}
+                <img class="rounded-circle profile_pic" src="{{ post.author.userprofile.profile_image.url }}">
+              {% else %}
+              {% load static %}
+    <link rel="stylesheet" href="{% static 'css/familypost.css' %}">
+                <img class='rounded-circle profile_pic' src="{% static 'familypost/images/default_profile.jpg' %}">
+              {% endif %}
+              
+            </td>
+            <td valign=bottom>
+              <h6 class="card-title">
+                &nbsp;{{ post.author.userprofile.first_name }} {{post.author.userprofile.last_name }}<br />
+                &nbsp;<small>{{ post.post_to_now }}</small>
+                
+              </h6>
+            </td>
+          </tr>
+        </table></a>
+        <b><a href="{% url 'Article_Detail' post.pk %}">{{ post.title }}</a> </b>
+    
+        {% if user.is_authenticated and user.id == post.author.id %} -
+        <small><a href="{% url 'update_post' post.pk %}">(edit)</a></small>
+        <small><a href="{% url 'delete_post' post.pk %}">(delete)</a></small>
+        {% endif %}
+        <br />
+        <p class="card-text">
+          <!--another method   {{ post.body|striptags|slice:":101"}}{% if post.body|length > 100 %}...{% endif %}-->
+          {{ post.body|safe|truncatechars:200 }}
+        </p>
+        {% if post.postmedias.all %}
+        <div id="carousel_{{ post.id }}" class="carousel carousel-dark slide carousel-fade" data-bs-interval="false">    
+          <div class="carousel-indicators">
+            {% for mediafile in post.postmedias.all %}              
+              <button type="button" data-bs-target="#carousel_{{ post.id }}" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.counter0 == 0 %}class="active"{% endif %} aria-current="true" aria-label="Slide {{ forloop.counter }}"></button>
+            {% endfor %}          
+          </div>
+          <div class="carousel-inner">
+            {% for mediafile in post.postmedias.all %}
+            <div class="carousel-item {% if forloop.counter0 == 0 %}active{% endif %}" align=center>        
+              {% if mediafile.file.name|filetype == "image" %}
+                <img src="https://www.shinix.com/familypost{{ mediafile.file.url }}" class="d-block caroimg" >
+              {% else %}
+              <video preload="metadata" controls muted playsinline class="carovid" id="postvideo_{{ mediafile.id }}" >
+                  <source src="https://www.shinix.com/familypost{{ mediafile.file.url }}#t=0.1" type="{{ mediafile.file.name|filetype2 }}">
+                </video>
+      
+              {% endif %}
+              
+            </div>      
+            {% endfor %}
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#carousel_{{ post.id }}"  data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#carousel_{{ post.id }}"  data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
+        {% endif %}
+          <!--a href="#" class="btn btn-primary">Go somewhere</a-->
+          {% for tag in post.tags.all %} #{{ tag.title }}&nbsp; {% endfor %}
+        </small>
+        <br />
+        {% PostAttrib post.id user.id as postattr %}
+        {% if user.is_authenticated %}                
+            {% if postattr.liked == True %}
+            <a name="like_{{ post.id }}" style="font-size:20px;color: blue;" class="likin" id="co" href="#" onClick="return false;"><i name="ilike_{{ post.id }}" class="fa fa-thumbs-up" aria-hidden="true">&nbsp;{{ postattr.totallikes }}</i></a>                                
+            {% else %}
+            <a name="like_{{ post.id }}" style="font-size:20px;color: black;" class="likin" id="co" href="#" onClick="return false;"><i name="ilike_{{ post.id }}" class="fa fa-thumbs-up" aria-hidden="true">&nbsp;{{ postattr.totallikes }}</i></a>
+            {% endif %}
+        {% else %}
+            <i name="ilike_{{ post.id }}" class="fa fa-thumbs-up" aria-hidden="true">{{ postattr.totallikes }}</i>                
+        {% endif %}
+      </div>
+    </div>
+    <br />
+  </div>
+    {% endfor %}
+  </div>
+  {% if post_list.has_next %}
+    <a class="infinite-more-link" href="?page={{ post_list.next_page_number }}">More</a>
+  {% endif %}
+
+  <script>
+    var infinite = new Waypoint.Infinite({
+      element: $('.infinite-container')[0],
+      onBeforePageLoad: function () {
+        $('.loading').show();
+      },
+      onAfterPageLoad: function ($items) {
+        $('.loading').hide();
+      }
+    });
+  </script>
+
+<script>
+// AJAX CALL
+//$('.likin').click(function(){
+  $(document).on('click', '.likin', function(e){ 
+  $.ajax({
+            type: "POST",
+            url: "{% url 'like' %}",
+            data: {'post_id': $(this).attr('name'),'operation':'like_submit','csrfmiddlewaretoken': '{{ csrf_token }}'},
+            dataType: "json",
+            
+            success: function(response) {                          
+              selector = document.getElementsByName(response.post_id);
+              selector2 = document.getElementsByName("i" + response.post_id);
+                    if(response.liked==true){
+                      $(selector).css("color","blue");                                  
+                      $(selector2).html(response.likes_count);
+                    }
+                    else if(response.liked==false){
+                      $(selector).css("color","black");                                  
+                      $(selector2).html(response.likes_count);
+                    }
+              },
+            error: function(xhr, status, error) {
+                // check status && error
+                window.alert(status);
+                window.alert(error);
+                window.alert(xhr.status);
+            },
+        });
+  })
+</script>
+
+{% endblock %}

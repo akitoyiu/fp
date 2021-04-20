@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Create a new Family Post{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+    <H1>Create Post</H1>
+    <br/>
+    <br/>
+    <div class="form-group">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.media }}
+            {{ form.as_p }}
+            <button class="btn btn-secondary">Post</button>
+        </form>
+    </div>
+
+    <script>
+        var author_id = "{{ user.id }}";
+        document.getElementById("author_id").value = author_id;
+    </script>
+
+
+{% else %}
+    You are not logged in.
+{% endif %}
+
+{% endblock %}

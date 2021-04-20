@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+
+<div class="card" style="width: 45rem;">
+    <div class="card-body">
+    <h6 class="card-title">{{ pageuser.first_name }} {{ pageuser.last_name }}<br/>
+    <small>
+        {{ pageuser.email }} <br/>        
+        {% if pageuser.www_url %}            
+            <a href="{{ pageuser.www_url }}" target="top">Website</a>&nbsp;
+        {% endif %}
+
+        {% if pageuser.ig_url %}
+            <a href="{{ pageuser.ig_url.url }}" target="top">Instagram</a>&nbsp;
+        {% endif %}
+    </small>
+    </h6>    
+
+    {% if pageuser.profile_image %}
+    <img src="{{ pageuser.profile_image.url }}" height=120px>
+    {% else %}
+        <img src="{% static 'familypost/images/default_profile.jpg' %}" height=120px>
+    {% endif %}<br/><br/>
+    
+    <br/>
+    {{ pageuser.bio }}<br/>
+    </div>
+</div>
+
+
+{% endblock %}

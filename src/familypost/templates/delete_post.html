@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ post.title }}{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated and user.id == post.author.id %}
+    <H1>Delete Post: {{ post.title }}</H1>
+    <small>{{ post.post_date|date:'Y-m-d' }}</small>
+    <br/>
+    <br/>
+    <H3>Are you sure?</H3>
+    <br/><br/>
+    <div class="form-group">
+        <form method="POST">
+            {% csrf_token %}
+            <button class="btn btn-secondary">Delete</button>
+        </form>
+    </div>
+
+{% else %}
+    You are not logged in.
+{% endif %}
+
+
+
+{% endblock %}

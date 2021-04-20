@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ post.title_tag }}{% endblock %}
+
+{% block content %}
+{% load my_template_tags %}
+<div class="card" style="width: 45rem">
+
+    <div class="card-body">
+      <table border="0">
+        <tr>
+          <td>
+            {% if post.author.userprofile.profile_image %}
+              <img class="rounded-circle profile_pic" src="{{ post.author.userprofile.profile_image.url }}">
+            {% else %}
+            {% load static %}
+              <img class='rounded-circle profile_pic' src="{% static 'familypost/images/default_profile.jpg' %}">
+            {% endif %}
+            
+          </td>
+          <td valign=bottom>
+            <h6 class="card-title">
+              &nbsp;{{ post.author.userprofile.first_name }} {{post.author.userprofile.last_name }}<br />
+              &nbsp;<small>{{ post.post_to_now }}</small>
+              
+            </h6>
+          </td>
+        </tr>
+      </table>
+      <b><a href="{% url 'Article_Detail' post.pk %}">{{ post.title }}</a> </b>
+  
+      {% if user.is_authenticated and user.id == post.author.id %} -
+      <small><a href="{% url 'update_post' post.pk %}">(edit)</a></small>
+      <small><a href="{% url 'delete_post' post.pk %}">(delete)</a></small>
+      {% endif %}
+      <br />
+      <p class="card-text">
+        <!--another method   {{ post.body|striptags|slice:":101"}}{% if post.body|length > 100 %}...{% endif %}-->
+        {{ post.body|safe|truncatechars:200 }}
+      </p>
+
+      {% if post.postmedias.all %}
+      <div id="carousel_{{ post.id }}" class="carousel carousel-dark slide carousel-fade" data-bs-interval="false" >    
+        <div class="carousel-indicators">
+          {% for mediafile in post.postmedias.all %}            
+            <button type="button" data-bs-target="#carousel_{{ post.id }}" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.counter0 == 0 %}class="active"{% endif %} aria-current="true" aria-label="Slide {{ forloop.counter }}"></button>
+          {% endfor %}          
+        </div>
+        <div class="carousel-inner">
+          {% for mediafile in post.postmedias.all %}
+          <div class="carousel-item{% if forloop.counter0 == 0 %} active{% endif %}" align=center>        
+            {% if mediafile.file.name|filetype == "image" %}
+              <img src="https://www.shinix.com/familypost{{ mediafile.file.url }}" class="d-block caroimg" >
+            {% else %}
+            <video preload="metadata" controls="true" muted playsinline class="carovid" id="postvideo_{{ mediafile.id }}" >
+                <source src="https://www.shinix.com/familypost{{ mediafile.file.url }}#t=0.1" type="{{ mediafile.file.name|filetype2 }}">
+              </video>
+    
+            {% endif %}          
+          </div>      
+          {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carousel_{{ post.id }}"  data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carousel_{{ post.id }}"  data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+      {% endif %}
+      <br />
+      <small
+        ><a href="{% url 'category_post' post.category|slugify %}"
+          >{{ post.category }}</a
+        ><br />
+        <!--a href="#" class="btn btn-primary">Go somewhere</a-->
+        {% for tag in post.tags.all %} #{{ tag.title }}&nbsp; {% endfor %}
+      </small>
+      <br />
+        
+    
+        <br />
+        <!--form action="{% url 'like_post' post.pk %}" method="POST"-->
+            <!--{% csrf_token %}-->
+            
+            {% if user.is_authenticated %}
+                {% if liked %}
+                <!--button type="submit", name="post_id", value="{{ post.id }}", class="btn btn-primary btn-sm"-->
+                <a name="like_{{ post.id }}" style="font-size:20px;color: blue;" class="likin" id="co" href="#" onClick="return false;"><i name="ilike_{{ post.id }}" class="fa fa-thumbs-up" aria-hidden="true">&nbsp;{{ total_likes }}</i></a>                
+                {% else %}                
+                <a name="like_{{ post.id }}" style="font-size:20px;color: black;" class="likin" id="co" href="#" onClick="return false;"><i name="ilike_{{ post.id }}" class="fa fa-thumbs-up" aria-hidden="true">&nbsp;{{ total_likes }}</i></a>
+                {% endif %}
+            {% else %}
+                <i name="ilike_{{ post.id }}" class="fa fa-thumbs-up" aria-hidden="true">{{ total_likes }}</i>    
+            {% endif %}
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+            <script>
+            // AJAX CALL
+            $('.likin').click(function(){
+                $.ajax({
+                        type: "POST",
+                        url: "{% url 'like' %}",
+                        data: {'post_id': $(this).attr('name'),'operation':'like_submit','csrfmiddlewaretoken': '{{ csrf_token }}'},
+                        dataType: "json",
+                        
+                        success: function(response) {                          
+                          selector = document.getElementsByName(response.post_id);
+                          selector2 = document.getElementsByName("i" + response.post_id);
+                                if(response.liked==true){
+                                  $(selector).css("color","blue");                                  
+                                  $(selector2).html(response.likes_count);
+                                }
+                                else if(response.liked==false){
+                                  $(selector).css("color","black");                                  
+                                  $(selector2).html(response.likes_count);
+                                }
+                          },
+                        error: function(xhr, status, error) {
+                            // check status && error
+                            window.alert(status);
+                            window.alert(error);
+                            window.alert(xhr.status);
+                        },
+                    });
+              })
+            </script>
+        
+          <br/><br />
+  <h4>Comments...</h4>
+
+    {% if user.is_authenticated %}
+    <form action="{% url 'post_comment' post.pk %}" method="POST">
+        {% csrf_token %}
+            Post your comment: <br/>
+            <textarea name="postcomment", class="form-control"></textarea>
+
+            <button type="submit", name="post_id", value="{{ post.id }}", class="btn btn-primary btn-sm">
+                Post
+            </button>
+    
+    </form>
+    <br/>    
+    {% endif %}
+
+    {% if post.comments.all %}
+    {% for postcomment in post.comments.all|dictsortreversed:'post_date' %}    
+        {{ postcomment.commenter.first_name }} {{ postcomment.commenter.last_name }} - {{ postcomment.post_date }} <br/>
+        {{ postcomment.comment }}
+        <br/><br/>
+    {% endfor %}
+
+    {% else %}
+    {% if not user.is_authenticated %}
+        Please login to post the first comment!
+    {% endif %}
+    {% endif %}
+    </div>
+</div>
+
+<!--a href="{% url "Home" %}" class="btn btn-secondary" >Back</a-->
+
+
+
+
+
+  <br/>
+  <br/>
+  
+
+
+
+{% endblock %}

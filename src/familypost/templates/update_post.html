@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ post.title }}{% endblock %}
+
+{% block content %}
+{% load my_template_tags %}
+{% load imagefit %}
+{% if user.is_authenticated and user.id == post.author.id %}
+    <div class="card" style="width: 45rem;">
+        <div class="card-body">
+        <h5 class="card-title">Edit Post</h5>
+        <br/>
+        <div class="form-group">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.media }}
+                {{ form.title }} 
+                {{ form.tags }} 
+                {{ form.category }}
+                <table border=0><tr>
+                {% for mediafile in post.postmedias.all %}
+                    {% if forloop.counter0|divisibleby:6 %}
+                    </tr><tr>
+                    {% endif %}
+                <td align=center>
+                <div id="postmedia_{{ mediafile.id }}"> 
+                    
+                    {% if mediafile.file.name|filetype == "image" %}                    
+                        <img src="{{ mediafile.file.url|resize:'100x100,C' }}"  >                                          
+                    {% else %}
+                    <video height="100" width=100 autoplay muted loop>
+                        <source src="https://www.shinix.com/familypost{{ mediafile.file.url }}" type="{{ mediafile.file.name|filetype2 }}">
+                    </video>                
+                    {% endif %} <br />
+                    <a name="delimg_{{ mediafile.id }}" style="font-size:20px;color: red;" class="delimg" id="co" href="#" onClick="return false;"><i class="fa fa-trash"></i></a>
+                    
+                </td>   
+                </div>
+                {% endfor %}
+                </tr></table>   
+                <br />
+                {{ form.postmedias }} <br/><br/>
+                {{ form.body }} <br/>
+                <button class="btn btn-secondary">Update</button>
+            </form>
+        </div>
+        </div>
+    </div>
+    
+    <script>
+        // AJAX CALL
+        //$('.likin').click(function(){
+        $(document).on('click', '.delimg', function(e){  
+          
+            $.ajax({
+                    type: "POST",
+                    url: "{% url 'delimg' %}",
+                    data: {'post_id': $(this).attr('name'),'operation':'delimg_submit','csrfmiddlewaretoken': '{{ csrf_token }}'},
+                    dataType: "json",
+                    
+                    success: function(response) {                          
+                        //selector = document.getElementsById( "postmedia_" + response.postmedia_id);                      
+                        //$(selector).hide().css("visibility", "hidden");
+
+                        $('#postmedia_' + response.postmedia_id).hide();
+                      },
+                    error: function(xhr, status, error) {
+                        // check status && error
+                        window.alert(status);
+                        window.alert(error);
+                        window.alert(xhr.status);
+                    },
+                });
+          })
+        </script>
+
+
+
+{% else %}
+    You are not logged in.
+{% endif %}
+{% endblock %}
