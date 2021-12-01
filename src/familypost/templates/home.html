@@ -56,7 +56,7 @@
       {% for mediafile in post.postmedias.all %}
       <div class="carousel-item {% if forloop.counter0 == 0 %}active{% endif %}" align=center>        
         {% if mediafile.file.name|filetype == "image" %}
-          <img src="{{ mediafile.file.url }}" class="d-block caroimg" >
+          <img src="https://www.shinix.com/familypost{{ mediafile.file.url }}" class="d-block caroimg" >
         {% else %}
         <video preload="metadata" controls muted playsinline class="carovid" id="postvideo_{{ mediafile.id }}" >
             <source src="https://www.shinix.com/familypost{{ mediafile.file.url }}#t=0.1" type="{{ mediafile.file.name|filetype2 }}">

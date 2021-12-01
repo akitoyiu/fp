@@ -3,14 +3,14 @@ version: '3.1'
 services:
 
   mysql:
-    image: mysql:8.0.23
+    image: mariadb:10.7.1
     restart: always
     environment:
       MYSQL_USER: yu_no
       MYSQL_PASSWORD: refresh
       MYSQL_ROOT_PASSWORD: refresh
     volumes:
-      - /media/mdrive/server/mysql-data/Django-Working/data/8.0:/var/lib/mysql
+      - ./mysql:/var/lib/mysql
       - ./conf/mysql:/etc/mysql/conf.d
     #ports:
     #  - "3306:3306"
@@ -41,7 +41,7 @@ services:
       - DATABASE_URL
     volumes:
       - ./src:/setup
-      - /media/mdrive/server/media-data/familypost/media:/setup/media
+      - /var/www/html/familypost/media:/setup/media
       - ./logs:/usr/local/log
     ports: 
       - "9011:8000"

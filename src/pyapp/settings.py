@@ -27,9 +27,6 @@ SECRET_KEY = 'b6%w=g6)3zbe(jy4-o#epcxvozftdlznqv-h!y+k1=(+%k5u29'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -95,8 +92,8 @@ DATABASES = {
 	'default': {
 		'ENGINE': 'django.db.backends.mysql',
         'NAME': 'pyapp',
-        'USER': 'django',
-        'PASSWORD': 'refresh',
+        'USER': 'djadmin',
+        'PASSWORD': 'pass123',
         'HOST': 'mysql',
         'PORT': '',
 #		'OPTIONS': {
