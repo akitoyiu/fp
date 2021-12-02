@@ -95,7 +95,7 @@
                 <a name="like_{{ post.id }}" style="font-size:20px;color: black;" class="likin" id="co" href="#" onClick="return false;"><i name="ilike_{{ post.id }}" class="fa fa-thumbs-up" aria-hidden="true">&nbsp;{{ postattr.totallikes }}</i></a>
                 {% endif %}
             {% else %}
-                <i name="ilike_{{ post.id }}" class="fa fa-thumbs-up" aria-hidden="true">{{ postattr.totallikes }}</i>                
+                <i name="ilike_{{ post.id }}" style="font-size:20px;" class="fa fa-thumbs-up" aria-hidden="true">{{ postattr.totallikes }}</i>                
             {% endif %}
   </div>
 </div>
@@ -124,13 +124,12 @@ $(document).on('click', '.likin', function(e){
               selector = document.getElementsByName(response.post_id);
               selector2 = document.getElementsByName("i" + response.post_id);
                     if(response.liked==true){
-                      $(selector).css("color","blue");                                  
-                      $(selector2).html(response.likes_count);
+                      $(selector).css("color","blue");                                                        
                     }
                     else if(response.liked==false){
-                      $(selector).css("color","black");                                  
-                      $(selector2).html(response.likes_count);
+                      $(selector).css("color","black");                                                        
                     }
+                    $(selector2).html("&nbsp;" + response.likes_count);
               },
             error: function(xhr, status, error) {
                 // check status && error

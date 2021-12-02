@@ -4,6 +4,7 @@
 
 {% block content %}
 {% load my_template_tags %}
+{% load static %}
 <div class="card" style="width: 45rem">
 
     <div class="card-body">
@@ -12,8 +13,7 @@
           <td>
             {% if post.author.userprofile.profile_image %}
               <img class="rounded-circle profile_pic" src="{{ post.author.userprofile.profile_image.url }}">
-            {% else %}
-            {% load static %}
+            {% else %}            
               <img class='rounded-circle profile_pic' src="{% static 'familypost/images/default_profile.jpg' %}">
             {% endif %}
             
@@ -109,13 +109,12 @@
                           selector = document.getElementsByName(response.post_id);
                           selector2 = document.getElementsByName("i" + response.post_id);
                                 if(response.liked==true){
-                                  $(selector).css("color","blue");                                  
-                                  $(selector2).html(response.likes_count);
+                                  $(selector).css("color","blue");                                                                    
                                 }
                                 else if(response.liked==false){
-                                  $(selector).css("color","black");                                  
-                                  $(selector2).html(response.likes_count);
+                                  $(selector).css("color","black");                                                                    
                                 }
+                                $(selector2).html("&nbsp;" + response.likes_count);
                           },
                         error: function(xhr, status, error) {
                             // check status && error
@@ -145,11 +144,157 @@
     {% endif %}
 
     {% if post.comments.all %}
-    {% for postcomment in post.comments.all|dictsortreversed:'post_date' %}    
+    {% for postcomment in post.comments.all|dictsortreversed:'post_date' %}   
+        {% if postcomment.commenter.userprofile.profile_image %}
+          <img class="rounded-circle profile_pic_small" src="{{ postcomment.commenter.userprofile.profile_image.url }}">
+        {% else %}        
+          <img class='rounded-circle profile_pic_small' src="{% static 'familypost/images/default_profile.jpg' %}">
+        {% endif %} 
         {{ postcomment.commenter.first_name }} {{ postcomment.commenter.last_name }} - {{ postcomment.post_date }} <br/>
-        {{ postcomment.comment }}
+        
+        <div id="pc_{{ postcomment.id }}" contenteditable="false" comment-id="{{ postcomment.id }} ">  
+        
+        {% if postcomment.comment != "" %}
+          {{ postcomment.comment }}
+        {% else %}
+          [Deleted]
+        {% endif %}
+        </div>
+        {% CommentAttrib postcomment.id user.id as commentattrib %}
+            {% if user.is_authenticated %}                
+                {% if commentattrib.liked == True %}
+                <a name="clike_{{ postcomment.id }}" style="font-size:12px;color: blue;" href="javascript:void();" onClick="commentLike( {{ postcomment.id }} );"><i name="cilike_{{ postcomment.id }}" class="fa fa-thumbs-up" aria-hidden="true">&nbsp;{{ commentattrib.totallikes }}</i></a>                                
+                {% else %}
+                <a name="clike_{{ postcomment.id }}" style="font-size:12px;color: black;" href="javascript:void();" onClick="commentLike( {{ postcomment.id }} );"><i name="cilike_{{ postcomment.id }}" class="fa fa-thumbs-up" aria-hidden="true">&nbsp;{{ commentattrib.totallikes }}</i></a>
+                {% endif %}
+            {% else %}
+                <i name="cilike_{{ postcomment.id }}" style="font-size:12px;" class="fa fa-thumbs-up" aria-hidden="true">{{ commentattrib.totallikes }}</i>                
+            {% endif %}
+
+        {% if user.is_authenticated and user.id == postcomment.commenter.id %}
+          <small>
+            <button id="pcl_{{ postcomment.id }}" 
+              class="btn btn-outline-primary btn-sml"
+              onclick="setEditible('{{ postcomment.id }}');">Edit</button>
+            <button id="pcc_{{ postcomment.id }}" style="display: none;"
+              class="btn btn-outline-secondary btn-sml" prevContent=""
+              onclick="setEditibleCancel('{{ postcomment.id }}');">Cancel</button>
+          </small>          
+        {% endif %}
         <br/><br/>
     {% endfor %}
+
+
+    <script>
+
+      function commentLike(id){
+        //alert(id);
+        $.ajax({
+                type: "POST",
+                url: "{% url 'like' %}",
+                data: {'postcomment_id': id,'operation':'likecomment_submit','csrfmiddlewaretoken': '{{ csrf_token }}'},
+                dataType: "json",
+                
+                success: function(response) {                          
+                  selector = document.getElementsByName("clike_" + response.postcomment_id);
+                  selector2 = document.getElementsByName("cilike_" + response.postcomment_id);
+                        if(response.liked==true){
+                          $(selector).css("color","blue");                                                            
+                        }
+                        else if(response.liked==false){
+                          $(selector).css("color","black");                                                            
+                        }
+                        $(selector2).html("&nbsp;" + response.likes_count);
+                  },
+                error: function(xhr, status, error) {
+                    // check status && error
+                    window.alert(status);
+                    window.alert(error);
+                    window.alert(xhr.status);
+                },
+            });
+      }
+
+      function setEditible(id){
+        var m=document.getElementById('pc_' + id);
+        var n=document.getElementById('pcl_' + id);
+        var o=document.getElementById('pcc_' + id);
+
+        if( n.innerHTML == "Edit" ){
+          m.setAttribute("contenteditable","true"); 
+          m.focus();
+          n.innerHTML="Save";
+          n.setAttribute("class","btn btn-primary btn-sml");
+          o.style.display="inline";
+          o.prevContent=m.innerHTML;
+        }
+        else{
+          n.innerHTML="Edit";
+          n.blur();
+          n.setAttribute("class","btn btn-outline-primary btn-sml");
+          m.setAttribute("contenteditable","false"); 
+          m.blur();
+          o.style.display="none";
+          o.prevContent="";
+          $.ajax({
+              type: "POST",
+              url: "{% url 'edit_comment' %}",
+              data: {'comment_id':m.getAttribute('comment-id'),'comment':m.innerHTML,'operation':'editcomment_submit','csrfmiddlewaretoken': '{{ csrf_token }}'},
+              dataType: "json",
+              
+              success: function(response) {                          
+                el.blur();
+                },
+              error: function(xhr, status, error) {
+                  // check status && error
+                  window.alert(status);
+                  window.alert(error);
+                  window.alert(xhr.status);
+              },
+          });
+        }
+      }
+
+      function setEditibleCancel(id){
+        var m=document.getElementById('pc_' + id);
+        var n=document.getElementById('pcl_' + id);
+        var o=document.getElementById('pcc_' + id);
+        //document.execCommand('undo');
+        m.innerHTML = o.prevContent;
+        n.innerHTML="Edit";
+        n.blur();
+        n.setAttribute("class","btn btn-outline-primary btn-sml");
+        m.setAttribute("contenteditable","false"); 
+        m.blur();
+        o.style.display="none";
+        o.prevContent="";
+
+      }
+
+      /* just for reference for event listener
+      document.addEventListener('keydown', function (event) {
+        var esc = event.which == 27,
+        nl = event.which == 13,
+        el = event.target,
+        input = el.nodeName != 'INPUT' && el.nodeName != 'TEXTAREA',
+        data = {};
+
+        if (input) {
+          if (esc) {
+            // restore state
+            document.execCommand('undo');
+            //el.blur();
+          } else if (nl) {
+            // save
+            
+            event.preventDefault();
+            }
+          }
+        
+      }, true);
+      */
+    </script>
+
 
     {% else %}
     {% if not user.is_authenticated %}
@@ -161,14 +306,7 @@
 
 <!--a href="{% url "Home" %}" class="btn btn-secondary" >Back</a-->
 
-
-
-
-
   <br/>
   <br/>
-  
-
-
 
 {% endblock %}

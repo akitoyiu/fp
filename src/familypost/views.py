@@ -217,8 +217,22 @@ def likeView(request, pk):
         post.likes.remove(request.user)
     else:
         liked = True
-        post.likes.add(request.user)
+        post.likes.add(request.user)        
     return HttpResponseRedirect(reverse('Article_Detail', args=[str(pk)]))
+
+
+def EditCommentView(request):    
+    if request.method =="POST":
+        if request.POST.get("operation") == "editcomment_submit" and request.is_ajax():
+            comment_id = request.POST.get("comment_id")
+            comment = request.POST.get("comment",None)
+            
+            postcomment = get_object_or_404(PostComment, id=comment_id)
+            postcomment.comment = comment
+            postcomment.save()
+         
+            ctx={"comment_id":comment_id}
+            return HttpResponse(json.dumps(ctx), content_type='application/json')
 
 
 def AddPostCommentView(request, pk):
@@ -247,6 +261,25 @@ def like_button(request):
          
             ctx={"likes_count":total_likes,"liked":liked,"post_id":like_post_id}
             return HttpResponse(json.dumps(ctx), content_type='application/json')
+
+        if request.POST.get("operation") == "likecomment_submit" and request.is_ajax():
+            postcomment_id = request.POST.get("postcomment_id",None)
+            
+            postComment = get_object_or_404(PostComment, id=postcomment_id)
+            if postComment.likes.filter(id = request.user.id).exists():
+                liked = False
+                postComment.likes.remove(request.user)
+            else:
+                liked = True
+                postComment.likes.add(request.user)
+
+            total_likes = postComment.totalLikes()
+         
+            ctx={"likes_count":total_likes,"liked":liked,"postcomment_id":postcomment_id}
+            return HttpResponse(json.dumps(ctx), content_type='application/json')
+
+
+
 
 def delimg_button(request):
     if request.method =="POST":

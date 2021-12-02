@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from .views import HomeView, ArticleDetailView, addPostView, updatePostView, deletePostView, HomePageView
 from .views import addCategoryView, categoryPostView, newPostView
-from .views import likeView, AddPostCommentView, like_button, delimg_button
+from .views import likeView, AddPostCommentView, like_button, delimg_button, EditCommentView
 from django.conf.urls import url
 
 #app_name="like_button"
@@ -25,6 +25,9 @@ urlpatterns = [
 
     #like
     path('like/<int:pk>', likeView, name='like_post'),
+
+    #Edit Comment
+    path('editcomment/', EditCommentView, name='edit_comment'),
 
     #Post Comment
     path('postcomment/<int:pk>', AddPostCommentView, name='post_comment'),
